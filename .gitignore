@@ -1,0 +1,8 @@
+.zcode/
+1.png
+2.png
+_worker - backup.js
+_worker - 副本.js
+_preview/
+node_modules/
+*.log
