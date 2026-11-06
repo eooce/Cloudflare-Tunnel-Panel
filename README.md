@@ -1,6 +1,6 @@
 <div align="center">
 
-# ⛅ Argo Control
+# ⛅ Cloudflare Tunnel Pannel
 
 **Cloudflare Tunnel 多账号可视化管理面板**
 
