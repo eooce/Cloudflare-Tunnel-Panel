@@ -24,7 +24,6 @@
   <img src="docs/login.png" width="32%" alt="登录页">
   <img src="docs/dashboard.png" width="32%" alt="仪表板">
   <img src="docs/tunnels.png" width="32%" alt="Tunnel 管理">
-  <br><img src="docs/mobile.png" width="22%" alt="移动端">
 </div>
 
 ## ✨ 功能特性
@@ -96,7 +95,7 @@ wrangler deploy
 | `PASSWORD` | ✅ | 面板登录密码，至少 6 位 |
 | `SESSION_SECRET` | 建议 | 会话签名密钥，一串随机字符。不设置时由密码派生（改密码会使所有人重新登录） |
 | `TUNNEL_DB` | ✅* | **D1 数据库绑定**（推荐）。与 `TUNNEL_STATE` 同时绑定时 D1 优先 |
-| `TUNNEL_STATE` | ✅* | **KV 命名空间绑定**。未绑 D1 时的存储方式，二者至少绑一个（*存储也可在面板"配置填写区"之外的所有功能正常工作，仅提醒/账号等持久化需要） |
+| `TUNNEL_STATE` | 可选 | **KV 命名空间绑定**。未绑 D1 时的存储方式，二者至少绑一个（*存储也可在面板"配置填写区"之外的所有功能正常工作，仅提醒/账号等持久化需要） |
 | `DEFAULT_SERVICE` | 可选 | 新建/编辑隧道时的默认本地服务地址，如 `http://localhost:8080` |
 | `TG_BOT_TOKEN` | 可选 | Telegram 机器人 Token（环境变量兜底；也可在面板里保存） |
 | `TG_CHAT_ID` | 可选 | 默认接收者 chat_id（环境变量兜底） |
