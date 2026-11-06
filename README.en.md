@@ -1,6 +1,6 @@
 <div align="center">
 
-# ⛅ Argo Control Panel
+# ⛅ Cloudflare Tunnel Pannel
 
 **Multi-account Cloudflare Tunnel Web Panel**
 
