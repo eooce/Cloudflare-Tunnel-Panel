@@ -1,6 +1,6 @@
 <div align="center">
 
-# ⛅ Argo Control
+# ⛅ Argo Control Panel
 
 **Multi-account Cloudflare Tunnel Web Panel**
 
@@ -20,11 +20,12 @@ English | **[简体中文](./README.md)**
 
 ## 🖼️ Screenshots
 
-| Login | Dashboard (dark) | Tunnel Management (light) |
-| --- | --- | --- |
-| ![Login](docs/login.png) | ![Dashboard](docs/dashboard.png) | ![Tunnels](docs/tunnels.png) |
-
-<div align="center"><img src="docs/mobile.png" width="300" alt="Mobile"></div>
+<div align="center">
+  <img src="docs/login.png" width="32%" alt="Login">
+  <img src="docs/dashboard.png" width="32%" alt="Dashboard">
+  <img src="docs/tunnels.png" width="32%" alt="Tunnel Management">
+  <br><img src="docs/mobile.png" width="22%" alt="Mobile">
+</div>
 
 ## ✨ Features
 
