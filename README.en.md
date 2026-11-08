@@ -210,6 +210,6 @@ All endpoints require login (cookie session) except `/api/login`. All are `POST`
 
 **Argo Control** · Cloudflare Tunnel Manager
 
-[GitHub Project](https://github.com/eooce/cloudflare-tunnel-panel) · 💝 Sponsor: [ForZTN](https://sponsorship.forztn.com/github.com/eooce/Cloudflare-Tunnel-Panel)
+💝 Sponsor: [ForZTN](https://sponsorship.forztn.com/github.com/eooce/Cloudflare-Tunnel-Panel)
 
 </div>
