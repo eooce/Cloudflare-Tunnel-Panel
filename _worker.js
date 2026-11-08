@@ -29,9 +29,9 @@ const CONFIG_DEFAULTS = {
   CF_API_TOKEN:    "", // [必填] API 令牌, 权限参考上述说明
   CF_ACCOUNT_ID:   "", // [必填] Cloudflare 账户 ID,创建token时会提示
   PASSWORD:        "", // [必填] 面板登录密码, 至少 6 位
-  SESSION_SECRET:  "8a50ef48974d4dc9ac7094c23382c57d", // [可选] 会话签名密钥, 填一串随机字符; 留空则自动由 PASSWORD 派生
+  SESSION_SECRET:  "8ab076f243c04c98404c223e9e69c9611e02813e072bf4", // [可选] 会话签名密钥, 填一串随机字符; 留空则自动由 PASSWORD 派生
   DEFAULT_SERVICE: "http://localhost:8001", // [可选] 新建/编辑隧道的默认本地服务地址, 默认 http://localhost:8001
-  TG_BOT_TOKEN:    "", // [可选] Telegram 机器人 Token; 也可在面板"Telegram 配置"里保存到 D1
+  TG_BOT_TOKEN:    "", // [可选] Telegram 机器人 Token; 也可在面板"Telegram 配置"里保存到 KV
   TG_CHAT_ID:      "", // [可选] Telegram 接收者 chat_id: 私聊填自己的正数 ID, 群组填负数
 };
 // ====================================================================

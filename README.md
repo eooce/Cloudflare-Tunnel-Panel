@@ -209,6 +209,6 @@ KV 有每日写入次数限制且存在最终一致延迟（写后立刻读可�
 
 **Argo Control** · Cloudflare Tunnel Manager
 
-[GitHub 项目地址](https://github.com/eooce/cloudflare-tunnel-panel)
+[GitHub 项目地址](https://github.com/eooce/cloudflare-tunnel-panel) · 💝 赞助商: [ForZTN](https://sponsorship.forztn.com/github.com/eooce/Cloudflare-Tunnel-Panel)
 
 </div>
