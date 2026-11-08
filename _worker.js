@@ -29,9 +29,9 @@ const CONFIG_DEFAULTS = {
   CF_API_TOKEN:    "", // [必填] API 令牌, 权限参考上述说明
   CF_ACCOUNT_ID:   "", // [必填] Cloudflare 账户 ID,创建token时会提示
   PASSWORD:        "", // [必填] 面板登录密码, 至少 6 位
-  SESSION_SECRET:  "8ab076f243c04c98404c223e9e69c9611e02813e072bf4", // [可选] 会话签名密钥, 填一串随机字符; 留空则自动由 PASSWORD 派生
-  DEFAULT_SERVICE: "http://localhost:18001", // [可选] 新建/编辑隧道的默认本地服务地址, 默认 http://localhost:8001
-  TG_BOT_TOKEN:    "", // [可选] Telegram 机器人 Token; 也可在面板"Telegram 配置"里保存到 KV
+  SESSION_SECRET:  "8a50ef48974d4dc9ac7094c23382c57d", // [可选] 会话签名密钥, 填一串随机字符; 留空则自动由 PASSWORD 派生
+  DEFAULT_SERVICE: "http://localhost:8001", // [可选] 新建/编辑隧道的默认本地服务地址, 默认 http://localhost:8001
+  TG_BOT_TOKEN:    "", // [可选] Telegram 机器人 Token; 也可在面板"Telegram 配置"里保存到 D1
   TG_CHAT_ID:      "", // [可选] Telegram 接收者 chat_id: 私聊填自己的正数 ID, 群组填负数
 };
 // ====================================================================
@@ -952,7 +952,29 @@ async function handleApi(request, env, path) {
     return json({ ...alertsPayload(env, meta), id, on: !!(meta.alerts[id] && meta.alerts[id].on === true) });
   }
 
-  if (path === "/api/token") return json({ token: await cf(env, `${base}/${d.id}/token`) });
+  if (path === "/api/token") {
+    if (d.rotate) {
+      // 轮换 Token (请求体与官方后台完全一致): PATCH 隧道, 带 name(隧道名称) + 新的 tunnel_secret
+      // (后台密钥格式: 两个 UUID 串接后 Base64), 响应的 result.token 就是新 Token
+      // 旧 Token 立即失效, 服务器上的 cloudflared 需改用新 Token 重启
+      let name = str(d.name);
+      if (!name) {
+        const tunnel = await cf(env, `${base}/${d.id}`);
+        name = (tunnel && tunnel.name) || "";
+      }
+      const secret = btoa(crypto.randomUUID() + crypto.randomUUID());
+      const rotated = await cf(env, `${base}/${d.id}`, "PATCH", { name: name, tunnel_secret: secret });
+      const token = (rotated && (rotated.token || rotated.Token)) || "";
+      if (token) return json({ token });
+      // 兜底: 响应未带 token 时再单独取一次
+      const fresh = await cf(env, `${base}/${d.id}/token`, "GET");
+      const t2 = typeof fresh === "string" ? fresh : (fresh && (fresh.token || fresh.Token)) || "";
+      return json({ token: t2 });
+    }
+    const result = await cf(env, `${base}/${d.id}/token`, "GET");
+    const token = typeof result === "string" ? result : (result && (result.token || result.Token)) || "";
+    return json({ token });
+  }
 
   // 单隧道连接器运行时长: 取各连接器 run_at (连接建立时间) 的最早一条; 列表徽章无需调此接口
   if (path === "/api/uptime") {
@@ -1826,12 +1848,13 @@ function fb(text){
   try{document.execCommand('copy');toast('已复制')}catch(e){toast('复制失败, 请手动长按复制','err')}
   document.body.removeChild(a);
 }
-function codeBox(title,text){
-  return '<div class="tit"><span>'+esc(title)+'</span></div>'+
+function codeBox(title,text,extra){
+  return '<div class="tit"><span>'+esc(title)+'</span>'+(extra||'')+'</div>'+
     '<div class="code"><span class="hintcp">⧉ 点击复制</span><pre data-copy="'+esc(text)+'">'+esc(text)+'</pre></div>';
 }
-function cmds(t){
-  return codeBox('Token',t)+
+var REFRESH_SVG='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>';
+function cmds(t,id,name){
+  return codeBox('Token',t,id?'<button class="btn sm" data-act="tkrotate" data-id="'+esc(id)+'" data-name="'+esc(name||'')+'" title="轮换后旧 Token 立即失效">'+REFRESH_SVG+'<span class="btxt">刷新Token</span></button>':'')+
          codeBox('Linux 运行','cloudflared tunnel run --token '+t)+
          codeBox('Docker 运行','docker run -d --restart always --network host cloudflare/cloudflared:latest tunnel --no-autoupdate run --token '+t);
 }
@@ -2189,6 +2212,7 @@ document.addEventListener('click',function(e){
   if(t.dataset.copy!==undefined){copy(t.dataset.copy);return}
   var id=t.dataset.id;
   if(t.dataset.act==='tk')showTk(id,t.dataset.name);
+  if(t.dataset.act==='tkrotate')rotateTk(id,t.dataset.name);
   if(t.dataset.act==='route')openRoutes(id,t.dataset.name);
   if(t.dataset.act==='edit')openEdit(id,t.dataset.name);
   if(t.dataset.act==='del')del(id);
@@ -2259,7 +2283,9 @@ $('go').onclick=async function(){
 
 /* ---- Token 弹窗 ---- */
 $('t_x').onclick=closeModal;$('am_x').onclick=closeModal;
+var lastTk=null; // 当前 Token 弹窗展示的隧道 (刷新 Token 后原地重绘)
 function showToken(r,token,fresh){
+  lastTk={r:r,token:token};
   $('t_banner').innerHTML='<div class="banner"><span class="ck">✓</span><div class="bd">'+
     (fresh?'隧道创建成功, 复制下面的域名和Token到服务器运行cloudflared':'隧道: <b>'+esc(r.name||r.id)+'</b>')+
     '</div></div>'+
@@ -2272,7 +2298,7 @@ function showToken(r,token,fresh){
           return '<div class="code"><span class="hintcp">⧉ 点击复制</span><pre style="max-height:none" data-copy="'+esc(x.hostname)+'">'+esc(x.hostname)+(x.path?'<span style="color:#8b93a0"> · '+esc(x.path)+'</span>':'')+'</pre></div>';
         }).join('<div style="height:8px"></div>');
     })();
-  $('t_body').innerHTML=cmds(token);
+  $('t_body').innerHTML=cmds(token,r.id,r.name);
   openModal('mToken');
 }
 async function showTk(id,name){
@@ -2286,9 +2312,22 @@ async function showTk(id,name){
     showToken({name:name,id:id,rules:rules,hostname:rules[0]?rules[0].hostname:'',path:rules[0]?(rules[0].path||''):'',service:det.service||''},res[0].token,false);
   }catch(e){$('t_body').innerHTML='<div class="empty">加载失败</div>';fail(e)}
 }
+// 刷新 (轮换) 隧道 Token: 旧 Token 立即失效, 弹窗原地重绘为新 Token
+async function rotateTk(id,name){
+  if(!(await askConfirm('确定刷新该隧道的 Token?\\n旧 Token 将立即失效, 服务器上正在运行的 cloudflared 需改用新 Token 重启。','刷新Token','刷新')))return;
+  setBusy(true,'刷新Token中...');
+  try{
+    var d=await api('/api/token',{id:id,rotate:true,name:name||''});
+    if(!d.token)throw new Error('Cloudflare 未返回新 Token');
+    if(lastTk&&lastTk.r&&lastTk.r.id===id){lastTk.token=d.token;showToken(lastTk.r,d.token,false);}
+    else showTk(id);
+    toast('Token 已刷新, 请用新 Token 重启 cloudflared');
+  }catch(e){fail(e)}
+  setBusy(false);
+}
 async function del(id){
   if(!(await askConfirm('确定删除该隧道?\\n将同时删除对应的 DNS 记录。','删除隧道','删除')))return;
-  setBusy(true,'删除tunnel和dns中...');
+  setBusy(true,'正在删除tunnel和dns...');
   try{
     var d=await api('/api/delete',{id:id});
     toast(d.dnsFailed?'隧道已删除, 但 DNS 记录清理失败: '+(d.dnsErr||'请到 DNS 页面手动删除'):(d.dns?'已删除隧道和 '+d.dns+' 条 DNS 记录':'已删除隧道'));
